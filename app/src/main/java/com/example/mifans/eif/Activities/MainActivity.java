@@ -173,6 +173,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         }
         navigationView = findViewById(R.id.navigation);
         ColorStateList csl = getResources().getColorStateList(R.color.nav_menu_color);
+        navigationView.setNavigationItemSelectedListener(this);
         navigationView.setItemTextColor(csl);
 
         View headview = navigationView.getHeaderView(0);
@@ -556,11 +557,13 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         switch (menuItem.getItemId()) {
             //日推
             case R.id.daily_recommend:
+                Toast.makeText(MainActivity.this,"测试",Toast.LENGTH_SHORT).show();
                 break;
             //广场
             case R.id.comments_plaza:
                 break;
             case R.id.my_collection:
+                startActivity(new Intent(MainActivity.this,CollectActivity.class));
                 break;
             case R.id.setting:
                 break;

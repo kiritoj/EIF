@@ -2,15 +2,19 @@ package com.example.mifans.eif.Activities;
 
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
+import android.os.Build;
+import android.support.v4.content.ContextCompat;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.support.v7.widget.DividerItemDecoration;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
 import android.view.MenuItem;
+import android.view.View;
 import android.widget.Toast;
 
 import com.example.mifans.eif.R;
@@ -32,6 +36,8 @@ public class CollectActivity extends AppCompatActivity {
         setContentView(R.layout.activity_collect);
         initViews();
 
+
+
     }
     public void initViews(){
         refreshLayout = findViewById(R.id.mycollect_refresh);
@@ -47,6 +53,9 @@ public class CollectActivity extends AppCompatActivity {
         initCollectedNews();
         songsAdapter = new RecyclerAdapter(songsList,this);
         recyclerView.setAdapter(songsAdapter);
+        DividerItemDecoration divider = new DividerItemDecoration(this,DividerItemDecoration.VERTICAL);
+        divider.setDrawable(ContextCompat.getDrawable(this,R.drawable.fenge));
+        recyclerView.addItemDecoration(divider);
         LinearLayoutManager manager = new LinearLayoutManager(CollectActivity.this);
         recyclerView.setLayoutManager(manager);
         refreshLayout.setColorSchemeResources(R.color.colorPrimaryDark);
@@ -64,6 +73,9 @@ public class CollectActivity extends AppCompatActivity {
 
             }
         });
+        if (Build.VERSION.SDK_INT > Build.VERSION_CODES.M) {
+            getWindow().getDecorView().setSystemUiVisibility(View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN | View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR);
+        }
     }
 
     @Override
