@@ -37,9 +37,8 @@
             android:name=".Activities.MoreActivity"
             android:theme="@style/NobarTheme" />
         <activity android:name=".Activities.LyricsActivity" />
-
-
-
+        <activity android:name=".Activities.CollectActivity"
+            android:theme="@style/NobarTheme"></activity>
     </application>
 
 </manifest>
