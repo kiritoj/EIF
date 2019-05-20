@@ -1,4 +1,6 @@
 # 红岩半期考核
+### 重构app：将播放器从activity移动到service，解决了收藏bug
+![](http://image.so.com/view?q=%E4%BF%AE%E4%BB%99%E7%86%AC%E5%A4%9C&src=tab_www&correct=%E4%BF%AE%E4%BB%99%E7%86%AC%E5%A4%9C&ancestor=list&cmsid=86ebfcad60e7efff1e5f8edb03046d37&cmran=0&cmras=0&cn=0&gn=0&kn=0&fsn=60#id=cf025c8d0603a83f2e01153ebcd1af0d&currsn=0)
 [安装包](https://github.com/kiritoj/EIF/blob/master/app/release/app-release.apk)
 ## 效果图
 ### 保存头像昵称
