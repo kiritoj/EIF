@@ -16,7 +16,7 @@
         android:layout_height="wrap_content"
         android:text="点击此处更该昵称"
         android:layout_centerHorizontal="true"
-        android:textColor="#fff"
+        android:textColor="#000"
         android:layout_below="@id/head"
         android:layout_marginTop="20dp"
         />

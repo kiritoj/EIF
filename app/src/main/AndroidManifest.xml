@@ -36,9 +36,14 @@
         <activity
             android:name=".Activities.MoreActivity"
             android:theme="@style/NobarTheme" />
-        <activity android:name=".Activities.LyricsActivity" />
-        <activity android:name=".Activities.CollectActivity"
-            android:theme="@style/NobarTheme"></activity>
+        <activity
+            android:name=".Activities.CollectActivity"
+            android:theme="@style/NobarTheme" />
+
+        <service
+            android:name=".Service.MusicService"
+            android:enabled="true"
+            android:exported="false"></service>
     </application>
 
 </manifest>

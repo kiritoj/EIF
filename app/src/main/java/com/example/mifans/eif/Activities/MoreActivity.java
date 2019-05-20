@@ -1,14 +1,17 @@
 package com.example.mifans.eif.Activities;
 
 import android.content.BroadcastReceiver;
+import android.content.ComponentName;
 import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.ServiceConnection;
 import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.os.Build;
+import android.os.IBinder;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -22,17 +25,20 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.example.mifans.eif.R;
+import com.example.mifans.eif.Service.MusicService;
 import com.example.mifans.eif.Tools.HttpUtil;
 import com.example.mifans.eif.Tools.HttpUtilListener;
 import com.example.mifans.eif.Tools.MyImageLoader;
+import com.example.mifans.eif.interfaces.UpdateMusicInfo;
 import com.example.mifans.eif.other.ControlType;
-import com.example.mifans.eif.other.RefreshReceiverType;
+
 import com.example.mifans.eif.other.Songbean;
 
 import org.json.JSONException;
 import org.json.JSONObject;
 
 public class MoreActivity extends AppCompatActivity implements View.OnClickListener {
+    public boolean islike = false;//点赞标志位
     private Toolbar toolbar;
     TextView songNameTv;
     TextView singerNameTv;
@@ -43,33 +49,75 @@ public class MoreActivity extends AppCompatActivity implements View.OnClickListe
     ImageView pause;//暂停
     ImageView like;
     ImageView collect;
-    Songbean songbean;
+    private Songbean msongbean;
     ControlType controlType = null;
     private boolean isruning = true;
     IntentFilter intentFilter;
-    RefreshReceiver refreshReceiver;
+    //RefreshReceiver refreshReceiver;
     SeekBar mseekBar;
     private MyDataBaseHelper databaseHelper = new MyDataBaseHelper(MoreActivity.this, "User.db", null, 1);
     SQLiteDatabase database;
-    private int iscollect = 0;//
+    private boolean iscollect = false;//
     Cursor cursor;
+    private MusicService.ControlBinder controlBinder;
+    UpdateMusicInfo updateMusicInfo = new UpdateMusicInfo() {
+        @Override
+        public void update(final Songbean songbean) {
+            msongbean = songbean;
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    initSongInfo(songbean);
+                }
+            });
+            loadLyrics(songbean);
+
+        }
+
+        @Override
+        public void error() {
+
+        }
+    };
+    private ServiceConnection connection = new ServiceConnection() {
+        @Override
+        public void onServiceConnected(ComponentName name, IBinder service) {
+            controlBinder = (MusicService.ControlBinder) service;
+            //服务绑定成功后更新界面
+            controlBinder.getcurrent(updateMusicInfo);
+        }
+
+        @Override
+        public void onServiceDisconnected(ComponentName name) {
+
+        }
+    };
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_more);
+        Intent intent = new Intent(this, MusicService.class);
+        bindService(intent, connection, BIND_AUTO_CREATE);
         initViews();
-        initSongInfo();
         clicks();
 
-        cursor = database.query("Collect", new String[]{"songid"}, "songid = ?", new String[]{songbean.getId()}, null, null, null);
+        Intent intent1=getIntent();
+        cursor = database.query("Collect", new String[]{"songid"}, "songid = ?", new String[]{intent1.getStringExtra("songid")}, null, null, null);
+
         if (cursor.moveToFirst()) {
             //cursor不为空说明收藏记录里存在该信息
-            iscollect = 1;
-        }
-        if (iscollect == 1) {
+            iscollect = true;
             collect.setImageResource(R.drawable.ic_star_on);
+
+
         }
+
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
 
     }
 
@@ -84,8 +132,8 @@ public class MoreActivity extends AppCompatActivity implements View.OnClickListe
     private void initViews() {
         database = databaseHelper.getWritableDatabase();
         intentFilter = new IntentFilter("refresh");
-        refreshReceiver = new RefreshReceiver();
-        registerReceiver(refreshReceiver, intentFilter);
+        // refreshReceiver = new RefreshReceiver();
+        //registerReceiver(refreshReceiver, intentFilter);
 
         collect = findViewById(R.id.collect_ib);
         like = findViewById(R.id.like_ib);
@@ -112,19 +160,19 @@ public class MoreActivity extends AppCompatActivity implements View.OnClickListe
         }
     }
 
-    public void initSongInfo() {
-        Intent intent = getIntent();
-        songbean = (Songbean) intent.getSerializableExtra("info");
+    //初始化音乐信息
+    public void initSongInfo(Songbean songbean) {
+
         songNameTv.setText(songbean.getSongName());
         singerNameTv.setText(songbean.getSingerName());
         MyImageLoader.with(MoreActivity.this).into(coverPic)
                 .placeholder(R.drawable.ic_default_bottom_music_icon)
                 .load(songbean.getCoverUrl());
-        loadLyrics();
+
     }
 
     //加载歌词
-    public void loadLyrics() {
+    public void loadLyrics(Songbean songbean) {
         HttpUtil.sendHttpRequest("http://elf.egos.hosigus.com/music/lyric/application/x-www-form-urlencoded?id=" + songbean.getId(), new HttpUtilListener() {
             @Override
             public void success(String response) {
@@ -143,7 +191,7 @@ public class MoreActivity extends AppCompatActivity implements View.OnClickListe
 
                 } catch (JSONException e) {
                     e.printStackTrace();
-                    loadLyrics();
+
                 }
             }
 
@@ -170,7 +218,7 @@ public class MoreActivity extends AppCompatActivity implements View.OnClickListe
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        unregisterReceiver(refreshReceiver);
+        // unregisterReceiver(refreshReceiver);
     }
 
     @Override
@@ -211,63 +259,49 @@ public class MoreActivity extends AppCompatActivity implements View.OnClickListe
                 }
                 break;
             case R.id.like_ib:
-                SharedPreferences preferencesLike = getSharedPreferences("reverse", MODE_PRIVATE);
-                SharedPreferences.Editor editorLike = preferencesLike.edit();
-                boolean islike = preferencesLike.getBoolean("like?", false);
+
                 if (!islike) {
                     like.setImageResource(R.drawable.ic_like_on);
-                    editorLike.putBoolean("like?", true);
-                    editorLike.apply();
+                    islike = true;
                 } else {
                     like.setImageResource(R.drawable.ic_like_off_blue);
-                    editorLike.putBoolean("like?", false);
-                    editorLike.apply();
+                    islike = false;
                 }
                 break;
             case R.id.collect_ib:
 
-                if (cursor.moveToFirst()) {
-                    iscollect = 1;
-                }
-                switch (iscollect) {
-                    case 0:
 
-                        collect.setImageResource(R.drawable.ic_star_on);
-                        //如果收藏就将信息保存进collect table
+                if (iscollect == false) {
+                    collect.setImageResource(R.drawable.ic_star_on);
+                    //如果收藏就将信息保存进collect table
 
-                        ContentValues values = new ContentValues();
-                        values.put("songid", songbean.getId());
-                        values.put("songname", songbean.getSongName());
-                        values.put("singer", songbean.getSingerName());
-                        values.put("coverurl", songbean.getCoverUrl());
-                        database.insert("Collect", null, values);
-                        Toast.makeText(MoreActivity.this, "收藏成功，可前往我的收藏查看", Toast.LENGTH_SHORT).show();
+                    ContentValues values = new ContentValues();
+                    values.put("songid", msongbean.getId());
+                    values.put("songname", msongbean.getSongName());
+                    values.put("singer", msongbean.getSingerName());
+                    values.put("coverurl", msongbean.getCoverUrl());
+                    database.insert("Collect", null, values);
+                    iscollect = true;
+                    Toast.makeText(MoreActivity.this, "收藏成功，可前往我的收藏查看", Toast.LENGTH_SHORT).show();
 //                    editor.putBoolean("collect?", false);
 //                    editor.apply();
-                        break;
 
-                    case 1:
-                        collect.setImageResource(R.drawable.ic_star_off_blue);
-                        //取消收藏将该条信息从数据库删除
-                        database = databaseHelper.getWritableDatabase();
-                        //根据musicid删除数据
-                        database.delete("Collect", "songid = ?", new String[]{songbean.getId()});
-                        Toast.makeText(MoreActivity.this, "已取消收藏", Toast.LENGTH_SHORT).show();
+                } else {
+                    collect.setImageResource(R.drawable.ic_star_off_blue);
+                    //取消收藏将该条信息从数据库删除
+                    database = databaseHelper.getWritableDatabase();
+                    //根据musicid删除数据
+                    database.delete("Collect", "songid = ?", new String[]{msongbean.getId()});
+                    Toast.makeText(MoreActivity.this, "已取消收藏", Toast.LENGTH_SHORT).show();
+                    iscollect = false;
 //                    editor.putBoolean("collect?", true);
 //                    editor.apply();
-                        break;
-                    default:
-                        break;
+
                 }
-
-
-            default:
-                break;
 
 
         }
 
-    }
 
 //    //拖动seekbar控制进度
 //    @Override
@@ -289,20 +323,20 @@ public class MoreActivity extends AppCompatActivity implements View.OnClickListe
 //        sendBroadcast(intent);
 //    }
 
-    class RefreshReceiver extends BroadcastReceiver {
-        //切换上下曲刷新广播
-        @Override
-        public void onReceive(Context context, Intent intent) {
-            //RefreshReceiverType refreshReceiverType = (RefreshReceiverType) intent.getSerializableExtra("refreshtype");
+        class RefreshReceiver extends BroadcastReceiver {
+            //切换上下曲刷新广播
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                //RefreshReceiverType refreshReceiverType = (RefreshReceiverType) intent.getSerializableExtra("refreshtype");
 //            switch (refreshReceiverType){
 //                case CUTOVER:
-            songbean = (Songbean) intent.getSerializableExtra("refreshview");
-            singerNameTv.setText(songbean.getSingerName());
-            songNameTv.setText(songbean.getSongName());
-            MyImageLoader.with(MoreActivity.this).into(coverPic)
-                    .placeholder(R.drawable.ic_default_bottom_music_icon)
-                    .load(songbean.getCoverUrl());
-            loadLyrics();
+//            msongbean = (Songbean) intent.getSerializableExtra("refreshview");
+//            singerNameTv.setText(songbean.getSingerName());
+//            songNameTv.setText(songbean.getSongName());
+//            MyImageLoader.with(MoreActivity.this).into(coverPic)
+//                    .placeholder(R.drawable.ic_default_bottom_music_icon)
+//                    .load(songbean.getCoverUrl());
+//            loadLyrics();
 //                    break;
 //                case PREPARE:
 //                    int max = intent.getIntExtra("musiclength",0);
@@ -314,6 +348,7 @@ public class MoreActivity extends AppCompatActivity implements View.OnClickListe
 //            }
 
 
+            }
         }
     }
 }
