@@ -1,5 +1,6 @@
 # 红岩半期考核
-[安装包](https://github.com/kiritoj/EIF/blob/master/app/release/app-release.apk)
+### 重构app：将播放器从activity移动到service，解决了收藏bug
+![](http://ww1.sinaimg.cn/large/006nwaiFly1g38b3bmzfbj30jg0jg75w.jpg)
 ## 效果图
 ### 保存头像昵称
 ![](http://ww1.sinaimg.cn/large/006nwaiFly1g373cnweuzg30a00jux6p.gif)
