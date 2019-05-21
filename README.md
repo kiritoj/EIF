@@ -3,7 +3,8 @@
 <img src="https://github.com/kiritoj/EIF/blob/master/eif.gif" height="600">\
 ### 重构app：将播放器从activity移动到service，解决了收藏bug
 <img src="http://ww1.sinaimg.cn/large/006nwaiFly1g38b3bmzfbj30jg0jg75w.jpg" height="300">
-### 我是分割线***
+### 我是分割线
+***
 ## 效果图
 * 保存头像昵称
 * 根据心情切歌，那个弹出控件没实现
