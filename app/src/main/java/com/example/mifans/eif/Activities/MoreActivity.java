@@ -38,6 +38,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 public class MoreActivity extends AppCompatActivity implements View.OnClickListener,SeekBar.OnSeekBarChangeListener {
+
     public boolean islike = false;//点赞标志位
     private Toolbar toolbar;
     TextView songNameTv;
@@ -54,7 +55,6 @@ public class MoreActivity extends AppCompatActivity implements View.OnClickListe
     private Songbean msongbean;
     ControlType controlType = null;
     private boolean isruning = true;
-    IntentFilter intentFilter;
     SeekBar mseekBar;
     private MyDataBaseHelper databaseHelper = new MyDataBaseHelper(MoreActivity.this, "User.db", null, 1);
     SQLiteDatabase database;
@@ -72,6 +72,7 @@ public class MoreActivity extends AppCompatActivity implements View.OnClickListe
                 collect.setImageResource(R.drawable.ic_star_on);
             }else{
                 collect.setImageResource(R.drawable.ic_star_off_blue);
+                iscollect = false;
             }
             runOnUiThread(new Runnable() {
                 @Override
@@ -110,12 +111,19 @@ public class MoreActivity extends AppCompatActivity implements View.OnClickListe
         public void onServiceConnected(ComponentName name, IBinder service) {
             controlBinder = (MusicService.ControlBinder) service;
             //服务绑定成功后更新界面
-            controlBinder.getcurrent(updateMusicInfo);
-            controlBinder.updateSeekBar(updateProgress,updateMusicInfo);
-            isruning = controlBinder.isplaying();
+            if(msongbean==null) {
+                controlBinder.getcurrent(updateMusicInfo);
+                controlBinder.updateSeekBar(updateProgress, updateMusicInfo);
+                isruning = controlBinder.isplaying();
 
-            if (!isruning) {
-                pause.setImageResource(R.drawable.ic_play_pause);
+                if (!isruning) {
+                    pause.setImageResource(R.drawable.ic_play_pause);
+                }
+            }else {
+                controlBinder.playSongBean(msongbean,updateMusicInfo);
+                controlBinder.updateSeekBar(updateProgress,updateMusicInfo);
+                iscollect = true;
+                collect.setImageResource(R.drawable.ic_star_on);
             }
 
         }
@@ -134,6 +142,8 @@ public class MoreActivity extends AppCompatActivity implements View.OnClickListe
         bindService(intent, connection, BIND_AUTO_CREATE);
         initViews();
         clicks();
+        Intent intent1 = getIntent();
+        msongbean = (Songbean) intent1.getSerializableExtra("songbean");
     }
 
     @Override
@@ -220,10 +230,6 @@ public class MoreActivity extends AppCompatActivity implements View.OnClickListe
             }
         });
     }
-    //切歌后更新收藏标志位
-    public void refreshCollect(){
-
-    }
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
@@ -240,7 +246,7 @@ public class MoreActivity extends AppCompatActivity implements View.OnClickListe
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        //unregisterReceiver(refreshReceiver);
+
     }
 
     @Override

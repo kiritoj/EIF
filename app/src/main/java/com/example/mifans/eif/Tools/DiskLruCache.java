@@ -557,7 +557,7 @@ public final class DiskLruCache implements Closeable {
             for (int i = 0; i < valueCount; i++) {
                 if (!entry.getDirtyFile(i).exists()) {
                     editor.abort();
-                    throw new IllegalStateException("edit didn't create file " + i);
+//                    throw new IllegalStateException("edit didn't create file " + i);
                 }
             }
         }

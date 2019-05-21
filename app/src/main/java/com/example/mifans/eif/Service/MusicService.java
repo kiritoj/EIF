@@ -75,6 +75,8 @@ public class MusicService extends Service {
     @Override
     public void onDestroy() {
         super.onDestroy();
+        player.stop();
+        player.release();
     }
 
     public class ControlBinder extends Binder {
@@ -127,6 +129,7 @@ public class MusicService extends Service {
                 player.setDataSource("http://music.163.com/song/media/outer/url?id=" + msongBean.getId() + ".mp3");
                 player.prepare();
                 player.start();
+
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -167,6 +170,7 @@ public class MusicService extends Service {
                 player.setDataSource("http://music.163.com/song/media/outer/url?id=" + msongBean.getId() + ".mp3");
                 player.prepare();
                 player.start();
+
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -224,7 +228,7 @@ public class MusicService extends Service {
                 public void run() {
 
                     handler.postDelayed(this,1000);//每秒更新一次
-                    if(player.isPlaying()) {
+                    if(player.getCurrentPosition() < player.getDuration()) {
                         int playcurrent = (int) Math.round(player.getCurrentPosition() / 1000.0);
                         int length = (int) Math.round(player.getDuration() / 1000.0);
                         String currentTime = String.format("%02d:%02d", playcurrent / 60, playcurrent % 60);
@@ -351,14 +355,13 @@ public class MusicService extends Service {
             }
             if (songbean != null) {
                 //更新主界面和播放界面的音乐信息
-                updateMusicInfo.update(songbean);
                 msongBean = songbean;
                 Log.d("testsongbean", songbean.getSongName() + "===" + songbean.getSingerName() + "===" + songbean.getId() + "===" + songbean.getCoverUrl());
                 try {
-
                     player.setDataSource("http://music.163.com/song/media/outer/url?id=" + songbean.getId() + ".mp3");
                     player.prepare();
                     player.start();
+                    updateMusicInfo.update(songbean);
 
                 } catch (IOException e) {
                     e.printStackTrace();
@@ -370,6 +373,21 @@ public class MusicService extends Service {
         //拖拽音乐进度
         public void changeProgress(int progress){
             player.seekTo(progress);
+        }
+        //播放收藏的的音乐
+        public void playSongBean(Songbean songbean,UpdateMusicInfo updateMusicInfo){
+            msongBean = songbean;
+            player.reset();
+            try {
+                player.setDataSource("http://music.163.com/song/media/outer/url?id=" + songbean.getId() + ".mp3");
+                player.prepare();
+                player.start();
+                updateMusicInfo.update(songbean);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
+
         }
 
     }

@@ -127,7 +127,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         initViews();
         //各控件的点击事件
         click();
-
+        initinfo();
 //        注册控制广播
         intentFilter = new IntentFilter();
         intentFilter.addAction("refreshMainActivity");
@@ -305,7 +305,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 break;
             case R.id.more:
                 Intent intent = new Intent(MainActivity.this, MoreActivity.class);
-                intent.putExtra("songid", String.valueOf(msongBean.getId()));
+                //intent.putExtra("songid", String.valueOf(msongBean.getId()));
                 startActivity(intent);
                 break;
             case R.id.happy:
@@ -353,7 +353,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     @Override
     protected void onDestroy() {
         super.onDestroy();
-//        unregisterReceiver(playreceiver);
+        unbindService(connection);
     }
 
     @Override

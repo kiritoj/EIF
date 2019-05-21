@@ -32,13 +32,14 @@ public class RecyclerAdapter extends RecyclerView.Adapter<RecyclerAdapter.ViewHo
 
     public ViewHolder onCreateViewHolder(@NonNull ViewGroup viewGroup, final int i) {
         View view = LayoutInflater.from(context).inflate(R.layout.itemcollect,viewGroup,false);
-        ViewHolder holder = new ViewHolder(view);
+        final ViewHolder holder = new ViewHolder(view);
         holder.cover.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                int position = holder.getAdapterPosition();
                 Intent intent = new Intent(context,MoreActivity.class);
-                Songbean songbean = songbeans.get(i);
-                intent.putExtra("info",songbean);
+                Songbean songbean = songbeans.get(position);
+                intent.putExtra("songbean",songbean);
                 context.startActivity(intent);
             }
         });
