@@ -7,7 +7,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.ServiceConnection;
-import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.os.Build;
@@ -30,6 +29,7 @@ import com.example.mifans.eif.Tools.HttpUtil;
 import com.example.mifans.eif.Tools.HttpUtilListener;
 import com.example.mifans.eif.Tools.MyImageLoader;
 import com.example.mifans.eif.interfaces.UpdateMusicInfo;
+import com.example.mifans.eif.interfaces.UpdateProgress;
 import com.example.mifans.eif.other.ControlType;
 
 import com.example.mifans.eif.other.Songbean;
@@ -37,12 +37,14 @@ import com.example.mifans.eif.other.Songbean;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-public class MoreActivity extends AppCompatActivity implements View.OnClickListener {
+public class MoreActivity extends AppCompatActivity implements View.OnClickListener,SeekBar.OnSeekBarChangeListener {
     public boolean islike = false;//点赞标志位
     private Toolbar toolbar;
     TextView songNameTv;
     TextView singerNameTv;
     TextView lyrics;
+    TextView mcurrentTime;
+    TextView mendTime;
     ImageView coverPic;
     ImageView moveBack;//前一首
     ImageView moveforward;//后一首
@@ -53,17 +55,24 @@ public class MoreActivity extends AppCompatActivity implements View.OnClickListe
     ControlType controlType = null;
     private boolean isruning = true;
     IntentFilter intentFilter;
-    //RefreshReceiver refreshReceiver;
     SeekBar mseekBar;
     private MyDataBaseHelper databaseHelper = new MyDataBaseHelper(MoreActivity.this, "User.db", null, 1);
     SQLiteDatabase database;
-    private boolean iscollect = false;//
+    private boolean iscollect = false;
     Cursor cursor;
     private MusicService.ControlBinder controlBinder;
     UpdateMusicInfo updateMusicInfo = new UpdateMusicInfo() {
         @Override
         public void update(final Songbean songbean) {
             msongbean = songbean;
+            cursor = database.query("Collect", new String[]{"songid"}, "songid = ?", new String[]{msongbean.getId()}, null, null, null);
+            if (cursor.moveToFirst()) {
+                //cursor不为空说明收藏记录里存在该信息
+                iscollect = true;
+                collect.setImageResource(R.drawable.ic_star_on);
+            }else{
+                collect.setImageResource(R.drawable.ic_star_off_blue);
+            }
             runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
@@ -71,8 +80,25 @@ public class MoreActivity extends AppCompatActivity implements View.OnClickListe
                 }
             });
             loadLyrics(songbean);
+            Intent refresh = new Intent("refreshMainActivity");
+            sendBroadcast(refresh);
+        }
+        @Override
+        public void error() {
 
         }
+    };
+    UpdateProgress updateProgress = new UpdateProgress() {
+        @Override
+        public void update(int profress, int max, String currentTime, String endTime) {
+            mseekBar.setMax(max);
+            mseekBar.setProgress(profress);
+            mcurrentTime.setText(currentTime);
+            mendTime.setText(endTime);
+        }
+
+
+
 
         @Override
         public void error() {
@@ -85,6 +111,13 @@ public class MoreActivity extends AppCompatActivity implements View.OnClickListe
             controlBinder = (MusicService.ControlBinder) service;
             //服务绑定成功后更新界面
             controlBinder.getcurrent(updateMusicInfo);
+            controlBinder.updateSeekBar(updateProgress,updateMusicInfo);
+            isruning = controlBinder.isplaying();
+
+            if (!isruning) {
+                pause.setImageResource(R.drawable.ic_play_pause);
+            }
+
         }
 
         @Override
@@ -101,24 +134,11 @@ public class MoreActivity extends AppCompatActivity implements View.OnClickListe
         bindService(intent, connection, BIND_AUTO_CREATE);
         initViews();
         clicks();
-
-        Intent intent1=getIntent();
-        cursor = database.query("Collect", new String[]{"songid"}, "songid = ?", new String[]{intent1.getStringExtra("songid")}, null, null, null);
-
-        if (cursor.moveToFirst()) {
-            //cursor不为空说明收藏记录里存在该信息
-            iscollect = true;
-            collect.setImageResource(R.drawable.ic_star_on);
-
-
-        }
-
     }
 
     @Override
     protected void onResume() {
         super.onResume();
-
     }
 
     public void clicks() {
@@ -131,14 +151,13 @@ public class MoreActivity extends AppCompatActivity implements View.OnClickListe
 
     private void initViews() {
         database = databaseHelper.getWritableDatabase();
-        intentFilter = new IntentFilter("refresh");
-        // refreshReceiver = new RefreshReceiver();
-        //registerReceiver(refreshReceiver, intentFilter);
+        mcurrentTime = findViewById(R.id.current_time_tv);
+        mendTime = findViewById(R.id.end_time_tv);
 
         collect = findViewById(R.id.collect_ib);
         like = findViewById(R.id.like_ib);
         mseekBar = findViewById(R.id.seek_bar);
-        //mseekBar.setOnSeekBarChangeListener(this);
+        mseekBar.setOnSeekBarChangeListener(this);
         moveBack = findViewById(R.id.move_back);
         moveforward = findViewById(R.id.move_forward);
         pause = findViewById(R.id.play_running);
@@ -201,7 +220,10 @@ public class MoreActivity extends AppCompatActivity implements View.OnClickListe
             }
         });
     }
+    //切歌后更新收藏标志位
+    public void refreshCollect(){
 
+    }
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
@@ -218,44 +240,39 @@ public class MoreActivity extends AppCompatActivity implements View.OnClickListe
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        // unregisterReceiver(refreshReceiver);
+        //unregisterReceiver(refreshReceiver);
     }
 
     @Override
     public void onClick(View v) {
         switch (v.getId()) {
             case R.id.move_back:
-                controlType = ControlType.BACK;
-                Intent back = new Intent("controlplay");
-                back.putExtra("control", controlType);
-                sendBroadcast(back);
+                if (controlBinder != null) {
+                    controlBinder.playPre(updateMusicInfo);
+                }
+                isruning = true;
+                pause.setImageResource(R.drawable.ic_play_running);
                 break;
             case R.id.move_forward:
-                controlType = ControlType.FORWARD;
-                Intent forward = new Intent("controlplay");
-                forward.putExtra("control", controlType);
-                sendBroadcast(forward);
+                if (controlBinder != null) {
+                    controlBinder.playNext(updateMusicInfo);
+                }
+                isruning = true;
+                pause.setImageResource(R.drawable.ic_play_running);
                 break;
             case R.id.play_running:
-                SharedPreferences preferences = getSharedPreferences("reverse", MODE_PRIVATE);
-                SharedPreferences.Editor editor = preferences.edit();
-                isruning = preferences.getBoolean("runing?", true);
                 if (isruning) {
-                    editor.putBoolean("runing?", false);
-                    editor.apply();
+                    if (controlBinder != null) {
+                        controlBinder.playPause();
+                    }
                     pause.setImageResource(R.drawable.ic_play_pause);
-                    controlType = ControlType.PAUSE;
-                    Intent mpause = new Intent("controlplay");
-                    mpause.putExtra("control", controlType);
-                    sendBroadcast(mpause);
+                    isruning = false;
                 } else {
-                    editor.putBoolean("runing?", true);
-                    editor.apply();
+                    if (controlBinder != null) {
+                        controlBinder.playContinue();
+                    }
                     pause.setImageResource(R.drawable.ic_play_running);
-                    controlType = ControlType.CONTINUE;
-                    Intent mcontinue = new Intent("controlplay");
-                    mcontinue.putExtra("control", controlType);
-                    sendBroadcast(mcontinue);
+                    isruning = true;
                 }
                 break;
             case R.id.like_ib:
@@ -283,8 +300,7 @@ public class MoreActivity extends AppCompatActivity implements View.OnClickListe
                     database.insert("Collect", null, values);
                     iscollect = true;
                     Toast.makeText(MoreActivity.this, "收藏成功，可前往我的收藏查看", Toast.LENGTH_SHORT).show();
-//                    editor.putBoolean("collect?", false);
-//                    editor.apply();
+
 
                 } else {
                     collect.setImageResource(R.drawable.ic_star_off_blue);
@@ -294,8 +310,6 @@ public class MoreActivity extends AppCompatActivity implements View.OnClickListe
                     database.delete("Collect", "songid = ?", new String[]{msongbean.getId()});
                     Toast.makeText(MoreActivity.this, "已取消收藏", Toast.LENGTH_SHORT).show();
                     iscollect = false;
-//                    editor.putBoolean("collect?", true);
-//                    editor.apply();
 
                 }
 
@@ -303,52 +317,31 @@ public class MoreActivity extends AppCompatActivity implements View.OnClickListe
         }
 
 
-//    //拖动seekbar控制进度
-//    @Override
-//    public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-//
-//    }
-//
-//    @Override
-//    public void onStartTrackingTouch(SeekBar seekBar) {
-//
-//    }
-//
-//    @Override
-//    //停止拖动时改变音乐进度
-//    public void onStopTrackingTouch(SeekBar seekBar) {
-//        Intent intent = new Intent("controlplay");
-//        intent.putExtra("control",ControlType.DRAG);
-//        intent.putExtra("progress",seekBar.getProgress());
-//        sendBroadcast(intent);
-//    }
 
         class RefreshReceiver extends BroadcastReceiver {
             //切换上下曲刷新广播
             @Override
             public void onReceive(Context context, Intent intent) {
-                //RefreshReceiverType refreshReceiverType = (RefreshReceiverType) intent.getSerializableExtra("refreshtype");
-//            switch (refreshReceiverType){
-//                case CUTOVER:
-//            msongbean = (Songbean) intent.getSerializableExtra("refreshview");
-//            singerNameTv.setText(songbean.getSingerName());
-//            songNameTv.setText(songbean.getSongName());
-//            MyImageLoader.with(MoreActivity.this).into(coverPic)
-//                    .placeholder(R.drawable.ic_default_bottom_music_icon)
-//                    .load(songbean.getCoverUrl());
-//            loadLyrics();
-//                    break;
-//                case PREPARE:
-//                    int max = intent.getIntExtra("musiclength",0);
-//                    Log.d("musiclength", String.valueOf(max));
-//                    mseekBar.setMax(max);
-//                    break;
-//                default:
-//                    break;
-//            }
 
 
             }
+        }
+    }
+
+    @Override
+    public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+
+    }
+
+    @Override
+    public void onStartTrackingTouch(SeekBar seekBar) {
+
+    }
+
+    @Override
+    public void onStopTrackingTouch(SeekBar seekBar) {
+        if (controlBinder!=null){
+            controlBinder.changeProgress(seekBar.getProgress());
         }
     }
 }

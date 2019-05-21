@@ -19,7 +19,6 @@ import android.content.res.ColorStateList;
 import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import android.media.MediaPlayer;
 import android.net.Uri;
 import android.os.Build;
 import android.os.IBinder;
@@ -84,7 +83,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     Songbean msongBean = null;
     int currenttime = 0;//动画进行的时间
     IntentFilter intentFilter;
-    ControlPlayReceiver receiver;
+    RefreshReceiver receiver;
     private MusicService.ControlBinder controlBinder;
     UpdateMusicInfo updateMusicInfo = new UpdateMusicInfo() {
         @Override
@@ -109,8 +108,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         public void onServiceConnected(ComponentName name, IBinder service) {
             controlBinder = (MusicService.ControlBinder) service;
             //服务绑定成功后更新界面
-            controlBinder.getsongId(SongType.HAPPY,updateMusicInfo);
-            }
+            controlBinder.getsongId(SongType.HAPPY, updateMusicInfo);
+        }
 
         @Override
         public void onServiceDisconnected(ComponentName name) {
@@ -131,9 +130,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
 //        注册控制广播
         intentFilter = new IntentFilter();
-        intentFilter.addAction("controlplay");
-        receiver = new ControlPlayReceiver();
-        registerReceiver(receiver,intentFilter);
+        intentFilter.addAction("refreshMainActivity");
+        receiver = new RefreshReceiver();
+        registerReceiver(receiver, intentFilter);
 
     }
 
@@ -213,9 +212,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         }
 
     }
+
     //加载歌词
-    private void loadlyrics(Songbean songbean){
-        if (songbean!=null){
+    private void loadlyrics(Songbean songbean) {
+        if (songbean != null) {
             HttpUtil.sendHttpRequest(baseUrlLyrics + songbean.getId(), new HttpUtilListener() {
                 @Override
                 public void success(final String response) {
@@ -304,28 +304,28 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 }
                 break;
             case R.id.more:
-                Intent intent = new Intent(MainActivity.this,MoreActivity.class);
-                intent.putExtra("songid",String.valueOf(msongBean.getId()));
+                Intent intent = new Intent(MainActivity.this, MoreActivity.class);
+                intent.putExtra("songid", String.valueOf(msongBean.getId()));
                 startActivity(intent);
                 break;
             case R.id.happy:
-                if (controlBinder!=null){
-                    controlBinder.cutSongBy(SongType.HAPPY,updateMusicInfo);
+                if (controlBinder != null) {
+                    controlBinder.cutSongBy(SongType.HAPPY, updateMusicInfo);
                 }
                 break;
             case R.id.unhappy:
-                if (controlBinder!=null){
-                    controlBinder.cutSongBy(SongType.UNHAPPY,updateMusicInfo);
+                if (controlBinder != null) {
+                    controlBinder.cutSongBy(SongType.UNHAPPY, updateMusicInfo);
                 }
                 break;
             case R.id.clam:
-                if(controlBinder!=null) {
+                if (controlBinder != null) {
                     controlBinder.cutSongBy(SongType.CLAM, updateMusicInfo);
                 }
                 break;
             case R.id.exciting:
-                if (controlBinder!=null){
-                    controlBinder.cutSongBy(SongType.UNHAPPY,updateMusicInfo);
+                if (controlBinder != null) {
+                    controlBinder.cutSongBy(SongType.UNHAPPY, updateMusicInfo);
                 }
                 break;
             case R.id.cir_cle:
@@ -473,131 +473,17 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         return path;
     }
 
-    class ControlPlayReceiver extends BroadcastReceiver {
+    //音乐详情界面切换上下曲后发出广播通知主界面更新
+    private class RefreshReceiver extends BroadcastReceiver {
 
         @Override
         public void onReceive(Context context, Intent intent) {
-//            int index = 0;
-//            ControlType controlType = (ControlType) intent.getSerializableExtra("control");
-//            switch (controlType){
-//
-//                case BACK:
-//                    player.pause();
-//                    player.reset();
-//                    switch (type){
-//                        case HAPPY:
-//                            temp = happysongs;
-//                            index = (happyindex == 0)?happysongs.size()-1:happyindex-1;
-//                            happyindex = index;
-//                            break;
-//                        case UNHAPPY:
-//                            temp = unhappysongs;
-//                            index = (unhappyindex == 0)?unhappysongs.size()-1:unhappyindex-1;
-//                            unhappyindex = index;
-//                            break;
-//                        case EXCITING:
-//                            temp = excitingsongs;
-//                            index = (excitingindex == 0)?excitingsongs.size()-1:excitingindex-1;
-//                            excitingindex = index;
-//                            break;
-//                        case CLAM:
-//                            temp = clamsongs;
-//                            index = (clamindex == 0)?clamsongs.size()-1:clamindex-1;
-//                            clamindex = index;
-//                            break;
-//
-//                        default:
-//                            break;
-//
-//                    }
-//                    try {
-//                        msongBean = temp.get(index);
-//                        loadinfo(msongBean);
-//                        Intent intent1 = new Intent("refresh");
-//                        //refreshReceiverType = RefreshReceiverType.CUTOVER;
-//                        intent1.putExtra("refreshview",msongBean);
-//                       // intent1.putExtra("refreshtype",RefreshReceiverType.CUTOVER);
-//                        sendBroadcast(intent1);
-//                        player.setDataSource("http://music.163.com/song/media/outer/url?id="+msongBean.getId()+".mp3");
-//                        player.prepare();
-//                        player.start();
-//                    } catch (IOException e) {
-//                        e.printStackTrace();
-//                    }
-//                    break;
-//                case FORWARD:
-//                    player.pause();
-//                    player.reset();
-//                    switch (type){
-//                        case HAPPY:
-//                            temp = happysongs;
-//                            index = (happyindex == happysongs.size()-1)?0:happyindex+1;
-//                            happyindex = index;
-//                            break;
-//                        case UNHAPPY:
-//                            temp = unhappysongs;
-//                            index = (unhappyindex == unhappysongs.size()-1)?0:unhappyindex+1;
-//                            unhappyindex = index;
-//                            break;
-//                        case EXCITING:
-//                            temp = excitingsongs;
-//                            index = (excitingindex == excitingsongs.size()-1)?0:excitingindex+1;
-//                            excitingindex = index;
-//                            break;
-//                        case CLAM:
-//                            temp = clamsongs;
-//                            index = (clamindex == clamsongs.size()-1)?0:clamindex+1;
-//                            clamindex = index;
-//                            break;
-//                        default:
-//                            break;
-//
-//                    }
-//                    try {
-//                        msongBean = temp.get(index);
-//                        Intent intent1 = new Intent("refresh");
-//
-//                        intent1.putExtra("refreshview",msongBean);
-//                        //intent1.putExtra("refreshtype",RefreshReceiverType.CUTOVER);
-//                        sendBroadcast(intent1);
-//                        loadinfo(msongBean);
-//                        player.setDataSource("http://music.163.com/song/media/outer/url?id="+msongBean.getId()+".mp3");
-//                        player.prepare();
-//                        player.start();
-//                    } catch (IOException e) {
-//                        e.printStackTrace();
-//                    }
-//                    break;
-//                case PAUSE:
-//                    if(player.isPlaying()){
-//                        player.pause();
-//                        currenttimemusic = player.getCurrentPosition();
-//                        Log.d("getCurrentPosition", String.valueOf(currenttimemusic));
-//                        songCover.animauseP();
-//                        valueAnimator.pause();
-//                        //currenttime = (int) valueAnimator.getCurrentPlayTime();
-//
-//                    }
-//                    break;
-//                case CONTINUE:
-//                    if (!player.isPlaying()){
-//                        player.start();
-//                        //player.seekTo(currenttimemusic);
-//                        songCover.animcontinue(currenttime);
-//                        valueAnimator.setCurrentPlayTime(currenttime);
-//                        valueAnimator.start();
-//
-//                    }
-////                case DRAG:
-////                    int progress = intent.getIntExtra("progress",0);
-////                    player.seekTo(progress);
-////                    break;
-//                default:
-//                    break;
-//
-//
-//            }
+            if (controlBinder!=null){
+                controlBinder.getcurrent(updateMusicInfo);
+            }
+
         }
+
     }
 
 
