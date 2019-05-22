@@ -18,7 +18,7 @@ public class ParsingLyric {
 
     }
     public static String parsin(String lyric){
-        String  s= lyric.replaceAll("\\[\\d{2}:\\d{2}[\\.:]\\d{3}?\\]","");
+        String  s= lyric.replaceAll("\\[\\d{2}:\\d{2}[\\.:]\\d{2,3}?\\]","");
 //        String regex1 = "\\[.+\\]";
 //        System.out.println(wordslist.get(0).matches(regex1));
 //        for (int i = 0; i < 5; i++) {
