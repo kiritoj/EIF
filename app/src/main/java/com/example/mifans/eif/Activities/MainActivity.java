@@ -56,8 +56,12 @@ import com.example.mifans.eif.Tools.HttpUtilListener;
 import com.example.mifans.eif.Tools.MyImageLoader;
 import com.example.mifans.eif.interfaces.UpdateMusicInfo;
 
+import com.example.mifans.eif.other.ParsingLyric;
 import com.example.mifans.eif.other.SongType;
 import com.example.mifans.eif.other.Songbean;
+
+import org.json.JSONException;
+import org.json.JSONObject;
 
 public class MainActivity extends AppCompatActivity implements View.OnClickListener, NavigationView.OnNavigationItemSelectedListener {
     public static final int CHOOSE_PICTURE = 2;//相册选择图片
@@ -219,12 +223,23 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             HttpUtil.sendHttpRequest(baseUrlLyrics + songbean.getId(), new HttpUtilListener() {
                 @Override
                 public void success(final String response) {
-                    runOnUiThread(new Runnable() {
-                        @Override
-                        public void run() {
-                            lyrics.setText(response);
-                        }
-                    });
+                    try {
+                        JSONObject jsonObject = new JSONObject(response);
+                        JSONObject object = jsonObject.getJSONObject("lrc");
+                        final String mlyrics = object.getString("lyric");
+                        Log.d("ceshigeci", mlyrics);
+                        runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
+                                lyrics.setText(ParsingLyric.parsin(mlyrics));
+                            }
+                        });
+
+
+                    } catch (JSONException e) {
+                        e.printStackTrace();
+
+                    }
                 }
 
                 @Override

@@ -32,6 +32,7 @@ import com.example.mifans.eif.interfaces.UpdateMusicInfo;
 import com.example.mifans.eif.interfaces.UpdateProgress;
 import com.example.mifans.eif.other.ControlType;
 
+import com.example.mifans.eif.other.ParsingLyric;
 import com.example.mifans.eif.other.Songbean;
 
 import org.json.JSONException;
@@ -213,7 +214,7 @@ public class MoreActivity extends AppCompatActivity implements View.OnClickListe
                     runOnUiThread(new Runnable() {
                         @Override
                         public void run() {
-                            lyrics.setText(mlyrics);
+                            lyrics.setText(ParsingLyric.parsin(mlyrics));
                         }
                     });
 
