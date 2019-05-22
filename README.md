@@ -1,7 +1,7 @@
 # 红岩半期考核
 ### 更新显示歌词
 <div align="center">
-<img src="http://ww1.sinaimg.cn/large/006nwaiFly1g3a0uwiuahj30u01o0nf0.jpg" height="500"  >
+<img src="http://ww1.sinaimg.cn/large/006nwaiFly1g3a0x80k49j30u01o0nf0.jpg" height="500"  >
 <img src="http://ww1.sinaimg.cn/large/006nwaiFly1g3a0w7ge5yj30u01o0qbv.jpg" height="500"  >
 
 
