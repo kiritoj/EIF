@@ -5,7 +5,7 @@
 <img src="http://ww1.sinaimg.cn/large/006nwaiFly1g3a0w7ge5yj30u01o0qbv.jpg" height="500"  >
 
 
- </div>
+ </div>\
 ### 更新：主要两个功能重写完了，完整的音乐控制(播放，暂停，上一曲，下一曲，更新进度条，拖拽改变进度，自动轮播)，修复收藏bug全部默认收藏
 <img src="https://github.com/kiritoj/EIF/blob/master/eif.gif" height="600">\
 ### 重构app：将播放器从activity移动到service，解决了收藏bug
